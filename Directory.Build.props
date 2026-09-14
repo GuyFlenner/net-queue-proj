@@ -1,0 +1,28 @@
+<Project>
+
+  <!--
+    This solution is deliberately self-contained and net8.0-targeted (per the take-home
+    spec), living inside the net10.0 net-proj repo. MSBuild's Directory.Build.props/
+    Directory.Packages.props auto-import walks up the directory tree and stops at the
+    first one it finds — this file (and the sibling Directory.Packages.props) exist so
+    that walk stops here, instead of picking up the repo root's net10.0-pinned
+    Directory.Build.props/Directory.Packages.props.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>CS1591</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('Tests'))">
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+</Project>

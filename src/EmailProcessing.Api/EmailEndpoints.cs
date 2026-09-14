@@ -1,0 +1,41 @@
+using EmailProcessing.Core;
+
+namespace EmailProcessing.Api;
+
+public static class EmailEndpoints
+{
+    public static IEndpointRouteBuilder MapEmailEndpoints(this IEndpointRouteBuilder app)
+    {
+        var group = app.MapGroup("/api/emails").WithTags("Emails");
+
+        group.MapPost("/", async (
+                SendEmailRequest request,
+                IBackgroundTaskQueue queue,
+                ILogger<Program> logger) =>
+            {
+                // Capture only the primitive fields we need — never the request record's
+                // enclosing scope or any scoped/disposed DI service. ILogger<Program> is
+                // backed by the singleton ILoggerFactory, so it's safe to outlive this request.
+                var to = request.To;
+                var subject = request.Subject;
+                var body = request.Body;
+
+                await queue.QueueAsync(async cancellationToken =>
+                {
+                    await Task.Delay(Random.Shared.Next(2000, 5001), cancellationToken);
+                    logger.LogInformation(
+                        "Email sent to {To} with subject {Subject} ({BodyLength} chars)",
+                        to,
+                        subject,
+                        body.Length);
+                });
+
+                // 202 Accepted immediately — the queued work above is not awaited.
+                return Results.Accepted(uri: (string?)null, value: new SendEmailResponse("Queued"));
+            })
+            .AddEndpointFilter<ValidationFilter<SendEmailRequest>>()
+            .WithName("SendEmail");
+
+        return app;
+    }
+}
