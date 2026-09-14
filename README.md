@@ -1,8 +1,10 @@
 # Queue-Based Background Email Processing (.NET 8)
 
-Minimal Email Sending API: `POST /api/emails` validates the request, enqueues the send, and
-returns `202 Accepted` immediately — the actual "send" (simulated 2–5s delay, log only) runs
-asynchronously on a background worker, never inside the HTTP request.
+Minimal Email Sending API: `POST /api/emails` validates the request and enqueues the send — it
+never waits for the 2–5s simulated send itself, which runs asynchronously on a background
+worker. It can briefly wait on enqueue alone if the bounded queue is momentarily full (an
+explicit backpressure choice, not a bug); under normal load it returns `202 Accepted` in well
+under a millisecond.
 
 ## How to run
 
