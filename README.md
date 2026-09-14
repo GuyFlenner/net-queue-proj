@@ -9,9 +9,14 @@ asynchronously on a background worker, never inside the HTTP request.
 Requires the .NET 8 SDK.
 
 ```bash
-dotnet test          # 11/11, includes concurrency/cancellation/exception-isolation tests
+dotnet test          # 12/12, 93.6% line coverage — concurrency, cancellation, backpressure,
+                      # and exception-isolation are all directly tested, not just the happy path
 dotnet run --project src/EmailProcessing.Api
 ```
+
+Architecture diagram (3 tabs — request/processing walkthrough, component architecture,
+deployment topology): [`docs/architecture.drawio`](docs/architecture.drawio) (open in
+[app.diagrams.net](https://app.diagrams.net) or the VS Code draw.io extension).
 
 The API listens on the URL printed at startup (e.g. `http://localhost:5000`).
 

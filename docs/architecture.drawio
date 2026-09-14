@@ -1,0 +1,277 @@
+<mxfile host="app.diagrams.net" modified="2026-09-14T00:00:00.000Z" version="24.0.0">
+  <diagram name="1 - Request and Processing Walkthrough" id="flow">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="1460" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="t1" value="Request and Processing Walkthrough &#8212; numbered end-to-end sequence. At the enqueue step the flow forks into two independent, concurrent paths." style="text;strokeColor=none;fillColor=#eef2f7;align=left;verticalAlign=middle;spacingLeft=10;fontColor=#000000;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="1060" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c1" value="Client" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="430" y="90" width="200" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c2" value="&#9312; Client sends&lt;br&gt;POST /api/emails" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="400" y="220" width="260" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c3" value="&#9313; ValidationFilter&amp;lt;SendEmailRequest&amp;gt;&lt;br&gt;runs FluentValidation &#8212; valid?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="350" y="350" width="360" height="120" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c4" value="400 ValidationProblem&lt;br&gt;(invalid &#8212; short-circuit,&lt;br&gt;next() never called)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="800" y="365" width="260" height="90" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c5" value="Client receives&lt;br&gt;400 response" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="820" y="520" width="220" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c6" value="&#9314; Handler captures To/Subject/Body,&lt;br&gt;calls queue.QueueAsync(...)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="370" y="540" width="320" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c7" value="&#9315; Work item (2&#8211;5s send delay + log)&lt;br&gt;enqueued onto bounded Channel&amp;lt;T&amp;gt;&lt;br&gt;(capacity 100, DI singleton queue)" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="330" y="680" width="400" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- Band A: HTTP response path (fast) -->
+        <mxCell id="bandA" value="HTTP RESPONSE PATH (fast, synchronous)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#eaf7e9;strokeColor=#82b366;strokeWidth=2;verticalAlign=top;align=center;spacingTop=8;fontColor=#000000;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="100" y="840" width="340" height="410" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c8" value="&#9316;a Handler returns immediately &#8212;&lt;br&gt;does NOT await the email send" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="130" y="880" width="280" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c9" value="&#9317;a Results.Accepted &#8594; HTTP 202&lt;br&gt;body: { status: &quot;Queued&quot; }" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="130" y="1010" width="280" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c10" value="&#9318;a Response reaches Client&lt;br&gt;&lt;i&gt;(email has NOT been sent yet)&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="130" y="1140" width="280" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- Band B: background processing path (async) -->
+        <mxCell id="bandB" value="BACKGROUND PROCESSING PATH (async, independent)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3ecf7;strokeColor=#9673a6;strokeWidth=2;verticalAlign=top;align=center;spacingTop=8;fontColor=#000000;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="560" y="840" width="340" height="410" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c11" value="&#9316;b QueuedTaskProcessingService&lt;br&gt;loop dequeues the work item" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="590" y="880" width="280" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c12" value="&#9317;b await Task.Delay(2&#8211;5s)&lt;br&gt;&#8212; simulated send" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="590" y="1010" width="280" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c13" value="&#9318;b logger.LogInformation&lt;br&gt;(&quot;Email sent to {To}...&quot;)&lt;br&gt;&lt;i&gt;(no HTTP context involved)&lt;/i&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="590" y="1140" width="280" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="note1" value="Key point: steps &#9316;a&#8211;&#9318;a and &#9316;b&#8211;&#9318;b run CONCURRENTLY, not sequentially. The client already holds its 202 response before the email actually sends &#8212; the 2&#8211;5s delay happens entirely in the background, independent of the HTTP request/response cycle that has already completed." style="shape=mxgraph.note;whiteSpace=wrap;html=1;fillColor=#fff9c4;strokeColor=#d6b656;fontColor=#000000;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="100" y="1310" width="800" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- Edges -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#555555;fontColor=#000000;" edge="1" source="c1" target="c2" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#555555;fontColor=#000000;" edge="1" source="c2" target="c3" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e3" value="invalid" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.35;entryX=0;entryY=0.5;strokeColor=#b85450;fontColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" source="c3" target="c4" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#b85450;fontColor=#000000;" edge="1" source="c4" target="c5" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e5" value="valid" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#555555;fontColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" source="c3" target="c6" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#555555;fontColor=#000000;" edge="1" source="c6" target="c7" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e7" value="HTTP response path" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.25;exitY=1;entryX=0.5;entryY=0;strokeColor=#82b366;fontColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;strokeWidth=2;" edge="1" source="c7" target="c8" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="430" y="875"/>
+              <mxPoint x="270" y="875"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="e8" value="background path" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.75;exitY=1;entryX=0.5;entryY=0;strokeColor=#9673a6;fontColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;strokeWidth=2;" edge="1" source="c7" target="c11" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="630" y="875"/>
+              <mxPoint x="730" y="875"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#82b366;fontColor=#000000;" edge="1" source="c8" target="c9" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#82b366;fontColor=#000000;" edge="1" source="c9" target="c10" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#9673a6;fontColor=#000000;" edge="1" source="c11" target="c12" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#9673a6;fontColor=#000000;" edge="1" source="c12" target="c13" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="2 - Component Architecture" id="arch">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1320" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="t2" value="Component Architecture &#8212; DI-registered components, their dependencies, and lifetimes" style="text;strokeColor=none;fillColor=#eef2f7;align=left;verticalAlign=middle;spacingLeft=10;fontColor=#000000;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="1080" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="a1" value="EmailProcessing.Api&lt;br&gt;Minimal API endpoint layer&lt;br&gt;(ASP.NET Core host + DI container)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="420" y="90" width="300" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="a2" value="Program.cs (composition root)&lt;br&gt;AddSingleton&amp;lt;IBackgroundTaskQueue&amp;gt;(...)&lt;br&gt;AddHostedService&amp;lt;QueuedTaskProcessingService&amp;gt;()" style="shape=mxgraph.note;whiteSpace=wrap;html=1;fillColor=#fff9c4;strokeColor=#d6b656;fontColor=#000000;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="900" y="90" width="320" height="140" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="a3" value="ValidationFilter&amp;lt;SendEmailRequest&amp;gt;&lt;br&gt;(IEndpointFilter)&lt;br&gt;runs FluentValidation IValidator&amp;lt;T&amp;gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="60" y="240" width="280" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="a4" value="&amp;laquo;interface&amp;raquo;&lt;br&gt;IBackgroundTaskQueue" style="rounded=1;dashed=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="420" y="240" width="300" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="a5" value="BackgroundTaskQueue&lt;br&gt;wraps bounded Channel&amp;lt;T&amp;gt;&lt;br&gt;&lt;b&gt;DI lifetime: Singleton&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="420" y="390" width="300" height="120" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="a6" value="Bounded capacity = 100&lt;br&gt;FullMode = Wait&lt;br&gt;Producer asynchronously awaits a&lt;br&gt;free slot &#8212; never drops work,&lt;br&gt;never blocks a thread synchronously,&lt;br&gt;never grows unbounded." style="shape=mxgraph.note;whiteSpace=wrap;html=1;fillColor=#fff9c4;strokeColor=#d6b656;fontColor=#000000;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="900" y="390" width="320" height="160" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="a7" value="QueuedTaskProcessingService&lt;br&gt;: BackgroundService&lt;br&gt;&lt;b&gt;DI lifetime: Hosted Service&lt;/b&gt; (IHostedService)&lt;br&gt;single sequential consumer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="420" y="580" width="320" height="120" as="geometry"/>
+        </mxCell>
+
+        <!-- Edges -->
+        <mxCell id="ae1" value="applies filter" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.15;exitY=1;entryX=0.5;entryY=0;strokeColor=#555555;fontColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" source="a1" target="a3" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="ae2" value="injects (ctor)" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#555555;fontColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" source="a1" target="a4" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="ae3" value="implemented by" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;endArrow=block;endFill=0;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#555555;fontColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" source="a4" target="a5" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="ae4" value="injects (ctor)" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.2;entryX=1;entryY=0.5;strokeColor=#555555;fontColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" source="a7" target="a4" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="765" y="604"/>
+              <mxPoint x="765" y="280"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="ae5" value="registers: Singleton" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;exitX=0;exitY=0.7;entryX=1;entryY=0.5;strokeColor=#999999;fontColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" source="a2" target="a5" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="790" y="188"/>
+              <mxPoint x="790" y="450"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="ae6" value="registers: Hosted Service" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;exitX=0;exitY=0.95;entryX=1;entryY=0.5;strokeColor=#999999;fontColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" source="a2" target="a7" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="820" y="223"/>
+              <mxPoint x="820" y="640"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram name="3 - Deployment and Runtime Topology" id="deploy">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="800" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="t3" value="Deployment / Runtime Topology &#8212; single-process, in-memory, no external infrastructure" style="text;strokeColor=none;fillColor=#eef2f7;align=left;verticalAlign=middle;spacingLeft=10;fontColor=#000000;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="1000" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="d1" value="Client" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="300" width="160" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="d2" value="Single ASP.NET Core Process&lt;br&gt;&lt;i&gt;(single container / single instance &#8212; not separate deployables)&lt;/i&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;strokeWidth=3;verticalAlign=top;align=center;spacingTop=10;fontColor=#000000;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="140" width="680" height="500" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="d3" value="Minimal API Host&lt;br&gt;(EmailProcessing.Api)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="360" y="210" width="560" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="d4" value="BackgroundTaskQueue (Singleton)&lt;br&gt;in-memory bounded Channel&amp;lt;T&amp;gt; (capacity 100)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="360" y="360" width="560" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="d5" value="QueuedTaskProcessingService&lt;br&gt;(Hosted Service / BackgroundService)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="360" y="510" width="560" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="note_single" value="&lt;b&gt;Single-process by design&lt;/b&gt;&lt;br&gt;No external dependencies: no database, no message broker (no RabbitMQ / Service Bus / Kafka), no distributed coordination &#8212; per the task's own constraints, not an oversight." style="shape=mxgraph.note;whiteSpace=wrap;html=1;fillColor=#fff9c4;strokeColor=#d6b656;fontColor=#000000;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="210" width="300" height="150" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="note_prod" value="&lt;b&gt;Production implication&lt;/b&gt;&lt;br&gt;In-memory queue backlog is LOST on process restart or crash &#8212; no persistence, no durability.&lt;br&gt;Accepted, explicitly out-of-scope limitation for this exercise &#8212; not an oversight." style="shape=mxgraph.note;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontColor=#000000;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="430" width="300" height="190" as="geometry"/>
+        </mxCell>
+
+        <!-- Edges -->
+        <mxCell id="de1" value="HTTP" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;strokeColor=#555555;fontColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" source="d1" target="d3" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="de2" value="enqueues work items&lt;br&gt;(in-process call)" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#555555;fontColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" source="d3" target="d4" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="de3" value="dequeues work items&lt;br&gt;(in-process call)" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#555555;fontColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" source="d4" target="d5" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
