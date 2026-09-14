@@ -30,7 +30,9 @@ curl -i http://localhost:5000/api/emails \
   -d '{"to":"guy@example.com","subject":"Hello","body":"Test"}'
 ```
 
-Response (returns in well under a millisecond — before the email is actually "sent"):
+Response (returns immediately under normal queue conditions — it does not wait for the 2–5s
+background send; local runs typically observe well under a millisecond, though that's a
+benchmark observation, not an architectural guarantee):
 
 ```
 HTTP/1.1 202 Accepted

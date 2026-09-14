@@ -73,10 +73,9 @@ public class BackgroundTaskQueueTests
     [Fact]
     public async Task QueueAsync_WhenChannelIsAtCapacity_AsynchronouslyAwaitsAFreeSlotInsteadOfBlockingOrDropping()
     {
-        // The single most-defended design decision in this solution (bounded channel,
-        // BoundedChannelFullMode.Wait — see ORAL_DEFENSE_NOTES.md Q2) had no automated proof
-        // it actually behaves that way until this test: flagged by an independent LLM-judge
-        // review pass as a real coverage gap two prior review passes both missed.
+        // Proves the actual backpressure guarantee: a full bounded channel (FullMode.Wait)
+        // makes a producer asynchronously await a free slot, rather than dropping the item or
+        // throwing — the central claim behind the bounded-channel design choice.
         var queue = new BackgroundTaskQueue(capacity: 1);
         await queue.QueueAsync(_ => Task.CompletedTask); // fills the one slot
 

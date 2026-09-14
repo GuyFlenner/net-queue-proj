@@ -21,17 +21,12 @@ public static class EmailEndpoints
                 var body = request.Body;
 
                 // IBackgroundTaskQueue.QueueAsync takes no CancellationToken by the task's own
-                // fixed interface spec — this call preserves that exact interface rather than
-                // inventing a different contract. A prior revision wrapped this in
-                // .WaitAsync(httpContext.RequestAborted) to "free" a disconnected client faster,
-                // but that only stops the caller from waiting on the enqueue — it does NOT
-                // cancel the underlying Channel.Writer.WriteAsync, which keeps running and still
-                // writes the item once a slot frees (verified empirically; an external review
-                // caught this — three prior internal review passes missed it). That made the
-                // fix misleading without being wrong, so it was removed: a full bounded channel
-                // means this await genuinely waits for capacity (asynchronous backpressure, not
-                // thread blocking). In production I'd expose real producer cancellation or use a
-                // try-write/fast-fail path so a full queue returns 503/429 instead of waiting.
+                // fixed interface spec, so this preserves that exact interface rather than
+                // inventing a different contract. That means a full bounded channel makes this
+                // await genuinely wait for capacity — asynchronous backpressure, never a
+                // thread-blocking wait, but a real wait. In production I'd expose real producer
+                // cancellation or use a try-write/fast-fail path so a full queue returns
+                // 503/429 instead of waiting.
                 await queue.QueueAsync(async cancellationToken =>
                 {
                     await Task.Delay(Random.Shared.Next(2000, 5001), cancellationToken);
@@ -42,7 +37,8 @@ public static class EmailEndpoints
                         body.Length);
                 });
 
-                // 202 Accepted immediately — the queued work above is not awaited.
+                // 202 Accepted — the queued work above is not awaited, so this doesn't wait for
+                // the 2-5s simulated send (it can wait briefly on enqueue itself under overload).
                 return Results.Accepted(uri: (string?)null, value: new SendEmailResponse("Queued"));
             })
             .AddEndpointFilter<ValidationFilter<SendEmailRequest>>()
