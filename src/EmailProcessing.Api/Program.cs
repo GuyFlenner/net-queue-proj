@@ -18,6 +18,11 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
+// AddProblemDetails() alone only registers the formatter — without UseExceptionHandler() an
+// unhandled exception returns an empty-body 500 in Production (it only looks fine in
+// Development, where DeveloperExceptionPageMiddleware happens to mask the gap).
+app.UseExceptionHandler();
+
 app.MapEmailEndpoints();
 
 app.Run();
